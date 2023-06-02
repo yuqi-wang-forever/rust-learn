@@ -4,13 +4,126 @@ use rand::Rng;
 use std::io::{Write,BufReader,BufRead,ErrorKind};
 use std::fs::File;
 use std::cmp::Ordering;
+use std::ops::Add; //允许泛型进行数学运算操作
 // cargo new 项目名
 // 第一次运行或者build项目会生成lock文件
 fn main() {
-   casting();
+   owner();
+}
+fn owner(){
+    let str1 = String::from("world");
+    let str2 = str1; //这样会将内存分配给str2，str1不再指向内存地址
+    let str3 = String::from("world");
+    let str4 = str3.clone(); // 将str3拷贝一份分给str4
+    print_str(str3);
+    let str_return =  print_return_string(str4);
+    println!("return_string = {str_return}");
+    let mut str5 = String::from("Stargate");
+    change_string(&mut str5);
+}
+fn change_string(x: &mut String) {
+    x.push_str(" Is Good");
+    println!("changed x_string: {x}");
+}
+fn print_return_string(x: String) -> String {
+    println!("A String and Return :{x}");
+    x
+}
+fn print_str(x: String){
+    println!("A String:{x}");
+}
+
+fn generics() {
+    println!("5 + 6 = {}",get_sum_generics(5,6));
+    println!("5.6 + 6.1 = {}",get_sum_generics(5.1,6.1));
+}
+fn get_sum_generics<T:Add<Output = T>>(x: T,y: T) -> T {
+    x+y
+}
+fn sum_list_impl() {
+    let num_list = vec![1,2,3,4,5,6,7];
+    println!("Sum of list = {}",sum_list(&num_list));
+}
+fn sum_list(list:&[i32]) -> i32{
+    let mut sum: i32 = 0;
+    for &val in list.iter(){
+        sum += &val;
+    }
+    sum // return省略时这样写
+}
+fn get_sum_return_many(x: i32) -> (i32,i32){
+    
+    return (x+1,x+2);
+}
+fn get_sum_return(x: i32,y: i32) -> i32{
+    
+    return (x+y);
+}
+fn get_sum(x: i32,y: i32){
+    println!("{} + {} = {}",x,y,x+y);
+    
+}
+fn vectors() {
+    // 向量基本上和数组一样，不过只能存储相同类型的值
+    let vect1: Vec<i32> = Vec::new(); //不可改没有mut
+    let mut vect2 = vec![1,2,3,4];
+    vect2.push(5);
+    //println!("vect1:{}",vect1[0]);//数组越界
+    
+    println!("1st :{}",vect2[0]);
+    let second_val: &i32 = &vect2[1]; //将vect2的引用给second
+    println!("vect2: 2nd = {second_val}");
+    match vect2.get(1) {
+        Some(second) => println!("2nd is :{}",second),
+        None => println!("No 2nd value"),
+    }
+    for i in &mut vect2 {
+        *i *= 2;
+        println!("{}",i);
+    }
+    for i in &vect2{
+        println!("i:{}",i);
+    }
+    println!("Vect2 length:{}",vect2.len());
+    println!("Pop: {:?}",vect2.pop()); //只能这样写 
+}
+fn enum_learn() {
+    enum Day{
+        Monday,
+        Tuesday,
+        Wednesday,
+        Thursday,
+        Friday,
+        Saturday,
+        Sunday
+    }
+    impl Day{
+        fn is_weekend(&self) -> bool{
+            match self {
+                Day::Saturday | Day::Sunday => true,
+                _ => false
+            }
+        }
+    }
+    let today:Day = Day::Friday;
+    match today {
+        Day::Monday => println!("Bad Day"),
+        Day::Tuesday => println!("Tuesday Day"),
+        Day::Wednesday => println!("Wednesday Day"),
+        Day::Thursday => println!("Thursday Day"),
+        Day::Friday => println!("Friday Day"),
+        Day::Saturday => println!("Saturday Day"),
+        Day::Sunday => println!("Sunday Day"),
+    
+    }
+    println!("Is today the weekend? {}",today.is_weekend());
+    println!("Is today the weekend? {}",Day::is_weekend(&today));
 }
 fn casting() {
-    
+   let int_u8: u8 = 5;
+   let int2_u8: u8 = 6;
+   let int3_u32: u32 = (int_u8 as u32) + (int2_u8 as u32);
+   let int4_u64:u64 = int2_u8 as u64;
 }
 fn string_no_repeat() {
     let str3 = String::from("x z r t t u y i [ o p");
