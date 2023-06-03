@@ -9,4 +9,23 @@
     - 在同一时间只能有一个owner
     - 当owner超出范围时变量值会消失
     rust是一个自动管理内存的语言
-    
+ ## 
+ **Creates**   
+    Modules that produce a library or executable
+**Modules**
+    Organize and handle privacy
+**Package**
+    Build,test and share creates
+**Path**
+    A way of naming an item such as a struct , function
+**自写的，mod必须是mode.rs**
+## Result
+    Result 有两个变体（varients) Ok 和 Err
+    enum Result<T,E> {
+        Ok(T),
+        Err(E),
+    }
+    T代表返回值的类型，E代表错误类型
+
+教程源码：https://github.com/derekbanas/Rust-Tutorial
+youtube:https://www.youtube.com/watch?v=ygL_xcavzQ4&t=0s

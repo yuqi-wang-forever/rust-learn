@@ -5,10 +5,263 @@ use std::io::{Write,BufReader,BufRead,ErrorKind};
 use std::fs::File;
 use std::cmp::Ordering;
 use std::ops::Add; //允许泛型进行数学运算操作
+use std::collections::HashMap;
+use std::thread;
+use std::time::Duration;
+use std::rc::Rc;
+use std::cell::RefCell;
+use std::sync::{Arc,Mutex};
+// 引入自己的module
+mod tvshows;
+use crate::tvshows::watch_stargate;
 // cargo new 项目名
 // 第一次运行或者build项目会生成lock文件
 fn main() {
-   owner();
+   thread_join();
+}
+fn bank_solve() {
+    pub struct Bank{
+        balance: f32,
+    }
+    fn withdraw(the_bank:&Arc<Mutex<Bank>>, amt: f32) {
+        let mut bank_ref = the_bank.lock().unwrap();
+        if bank_ref.balance < 5.0 {
+            println!("Current balance:{} withdrawal a smaller amount",bank_ref.balance);
+
+        } else {
+            bank_ref.balance -= amt;
+            println!("Current balance:{} after customer withdrawal {}",bank_ref.balance,amt);
+        }
+    }
+    fn customer(the_bank:Arc<Mutex<Bank>>) {
+        withdraw(&the_bank, 5.0);
+    }
+    let bank: Arc<Mutex<Bank>> = Arc::new(Mutex::new(Bank {balance: 20.0}));
+    let handles= (0..10).map(|_|{
+        let bank_ref: Arc<Mutex<Bank>> = bank.clone();
+        thread::spawn(||{
+            customer(bank_ref)
+        })
+    });
+    for handle in handles {
+        handle.join().unwrap();
+    }
+    println!("Total {}",bank.lock().unwrap().balance);
+
+}
+fn bank() {
+    pub struct Bank{
+        balance: f32,
+    }
+    // fn withdraw(the_bank: &mut Bank,amt: f32) {
+    //     the_bank.balance -= amt;
+    // }
+    // let mut bank = Bank{balance: 100.0};
+    // withdraw(&mut bank, 5.0);
+    // println!("Banlance:{}",bank.balance);
+    // fn customer(the_bank: &mut Bank,amt: f32) {
+    //     withdraw(the_bank, amt);
+    // }
+    // thread::spawn(||{ //会出现问题
+    //     customer(&mut bank, 5.0)
+    // }).join().unwrap();
+}
+fn thread_join() {
+    let thread1 = thread::spawn(||{
+        for i in 1..25 {
+            println!("Spawn thread:{}",i);
+            thread::sleep(Duration::from_millis(1));
+        }
+    });
+    for i in 1..20 {
+        println!("main thread:{}",i);
+        thread::sleep(Duration::from_millis(1));
+    }
+    thread1.join().unwrap();
+}
+fn concurrency() { // 最多打印19个 需要使用join操作将任务完成
+    let thread1 = thread::spawn(||{
+        for i in 1..25 {
+            println!("Spawn thread:{}",1);
+            thread::sleep(Duration::from_millis(1));
+        }
+    });
+    for i in 1..20 {
+        println!("main thread:{}",i);
+        thread::sleep(Duration::from_millis(1));
+    }
+}
+// 二叉树的数据结构
+fn binary_tree() {
+    struct TreeNode<T>{
+        pub left: Option<Box<TreeNode<T>>>,
+        pub right: Option<Box<TreeNode<T>>>,
+        pub key: T,
+    }
+    impl<T> TreeNode<T> {
+        pub fn new(key:T) -> Self {
+            TreeNode { left: None, right: None, key: key}
+        }
+        pub fn left(mut self, node: TreeNode<T>) -> Self {
+            self.left = Some(Box::new(node));
+            self
+        }
+        pub fn right(mut self,node: TreeNode<T>) -> Self {
+            self.right = Some(Box::new(node));
+            self
+        }
+    }
+    let node1 = TreeNode::new(1)
+    .left(TreeNode::new(2))
+    .right(TreeNode::new(3));
+}
+fn box_store() {
+    // box:智能指针 heap上 当存储数据较多的时候使用box存储
+    let b_int1 = Box::new(10);
+    println!("b_int1 = {b_int1}");;
+}
+fn closures() {
+    // let var_name = |parameters| -> return_type {body} 语法、、
+    let can_vote = |age: i32| {
+        age >= 18
+    };
+    println!("can vote: {}",can_vote(18));
+    let mut samp1 = 5;
+    let print_var = || println!("samp1 is :{}",samp1);
+    print_var();
+    samp1 = 10;
+    let mut change_var = || samp1 +=1;
+    change_var();
+    println!("samp1 changed:{}",samp1);
+    samp1 = 10;
+    println!("samp1 reset:{}",samp1);
+    //
+    fn use_func<T>(a: i32,b: i32 ,func: T) -> i32 
+    where T:Fn(i32,i32) -> i32 {
+        func(a,b)
+    }
+    let sum = |a: i32,b: i32| a+b;
+    let product = |a: i32,b: i32| a*b;
+    println!("5 + 4 = {}",use_func(5,4,sum));
+    println!("5 * 4 = {}",use_func(5,4,product));
+    println!("5 + 4 = {}",sum(5,4));
+    println!("5 * 4 = {}",product(5,4));
+}
+fn iterators() {
+    let mut arr_it = [1,2,3,4];
+    for val in arr_it.iter() {
+        println!("{}",val); //无法改变值
+    }
+    // arr_it.into_inter(); // 集合不能再使用,可以修改值
+    let mut iter1 = arr_it.iter();
+    println!("1st is {:?}",iter1.next());
+}
+fn file() {
+    let path = "lines.txt";
+    let output = File::create(path);
+    let mut output = match output {
+       Ok(file) => file,
+       Err(error)=> panic!("problem creating file : {:?}",error),
+    };
+    write!(output,"Just some \n Random Words").expect("has an error when write some text");
+
+    let input = File::open(path).unwrap();
+    let buffered = BufReader::new(input);
+    for line in buffered.lines() {
+        println!("{}",line.unwrap());
+    }
+    let output2 = File::create("rand.txt");
+    let output2 = match output2 {
+        Ok(file) => file,
+        Err(error) => match error.kind() {
+            ErrorKind::NotFound => match File::create("rand.txt") {
+                Ok(filecreated) => filecreated,
+                Err(err) => panic!("can not creaet file:{:?}",err),
+            }
+            _other_error => panic!("still has other error :{:?}",error),
+        }
+    };
+}
+fn error_handle() {
+    panic!("this will print a error message");
+}
+fn mod_watch_stargate() {
+    watch_stargate();
+}
+fn trait_struct() {
+    const PI: f32 = 3.1415926;
+    trait Shape { //类似面向对象中的接口
+        fn new(length: f32,width: f32) -> Self;
+        fn area(&self) -> f32;
+    }
+    struct Rectangle {length: f32,width: f32};
+    struct Circle {length: f32,width: f32};
+    impl Shape for Rectangle {
+        // 必须要有new函数
+        fn new(length: f32,width: f32) -> Rectangle {
+            return Rectangle { length, width };
+        }
+        fn area(&self) -> f32 {
+            return self.length * self.width;
+        }
+    }
+    impl Shape for Circle {
+        fn new(length: f32,width: f32) -> Circle {
+            return Circle { length, width };
+        }
+        fn area(&self) -> f32 {
+            return (self.length/2.0).powf(2.0) * PI;
+        }
+    }
+    let rec:Rectangle = Shape::new(10.3,5.3);
+    let circ:Circle = Shape::new(10.2, 10.6);
+
+    println!("Rec area: {}",rec.area());
+    println!("Circ area: {}",Circle::area(&circ));
+}
+fn struct_generics() {
+    struct Rectangle<T,U> {
+        length:T,
+        height:U,
+    }
+    let rec = Rectangle {
+        length:10,
+        height:9.3,
+    };
+}
+fn structs() {
+    struct Customer {
+        name: String,
+        address: String,
+        balance: f32,
+    }
+    let mut customer_jack = Customer {
+        name: String::from("Jack"),
+        address: String::from("SG1"),
+        balance: 4000.30,
+    };
+    println!("{}",customer_jack.balance);
+    // 修改
+    customer_jack.balance = 5000.39;
+
+    println!("{}",customer_jack.balance);
+}
+fn hashmaps() {
+    let mut heros = HashMap::new();
+    heros.insert("superman","Clark");
+    heros.insert("batman","Bruce");
+    heros.insert("The Flash","Barry");
+    for (k,v) in heros.iter(){
+        println!("{} : {}",k,v);
+    }
+    println!("length:{}",heros.len());
+    if heros.contains_key(&"batman"){
+        let the_batman = heros.get(&"batman");
+        match the_batman {
+            Some(x) => println!("{x} is a hero"),
+            None => println!("Oops is not a hero"),
+        }
+    }
 }
 fn owner(){
     let str1 = String::from("world");
